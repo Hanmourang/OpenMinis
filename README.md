@@ -31,7 +31,7 @@ Official website: **[openminis.app](https://openminis.app)**
 
 ---
 
-## What it does
+## What it does !
 
 | | |
 |---|---|
