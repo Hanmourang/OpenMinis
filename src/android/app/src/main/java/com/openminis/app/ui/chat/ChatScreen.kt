@@ -2380,6 +2380,9 @@ fun ChatScreen(
                                     }
                                     .padding(horizontal = 4.dp, vertical = 2.dp),
                             )
+                            com.openminis.app.ui.workenv.WorkEnvironmentBadge(
+                                store = com.openminis.app.workenv.WorkEnvironmentHolder.store(context),
+                            )
                             // Model picker subtitle: green dot + group +
                             // provider/model. Tap opens the model picker —
                             // separated from the title above so tapping the
@@ -6331,6 +6334,11 @@ fun ChatScreen(
         )
     }
     } // CompositionLocalProvider
+
+    com.openminis.app.ui.workenv.WorkEnvironmentSheetHost(
+        store = com.openminis.app.workenv.WorkEnvironmentHolder.store(context),
+        connection = com.openminis.app.workenv.WorkEnvironmentHolder.connection(context),
+    )
 }
 
 // [T-android-split-chat] UserMessageBubble / UserAttachmentList /

@@ -20,6 +20,21 @@ extension AIChatViewModel {
         let effectiveTimeout = timeout ?? defaultCommandTimeout
         logger.info("Executing command via coordinator (timeout: \(Int(effectiveTimeout))s): \(command)")
 
+        if WorkEnvironmentStore.shared.shouldRouteToDesktop {
+            logger.info("Routing shell_execute to desktop companion")
+            do {
+                let result = try await DesktopConnectionManager.shared.execute(
+                    command: command, timeout: effectiveTimeout)
+                lineCallback(result.output)
+                return CommandResult(output: result.output, exitCode: result.exitCode)
+            } catch {
+                return CommandResult(
+                    output: "Desktop companion error: \(error.localizedDescription)",
+                    exitCode: -1
+                )
+            }
+        }
+
         guard let sid = sessionId else {
             return CommandResult(output: "Error: no session", exitCode: -1)
         }

@@ -323,8 +323,12 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_minis-desktop._tcp</string>
+	</array>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Minis uses local network access for the debug server and to let the AI agent communicate with locally-hosted services.</string>
+	<string>Minis uses local network access to discover and connect to a desktop companion, for the debug server, and to let the AI agent communicate with locally-hosted services.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
