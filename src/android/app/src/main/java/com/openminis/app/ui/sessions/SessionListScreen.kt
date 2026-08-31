@@ -755,6 +755,11 @@ fun SessionListScreen(
             // iOS `didInitialLoad` on ContentView. The transition is usually
             // sub-200ms, so no spinner.
             if (isInitialLoadComplete) Column(modifier = Modifier.fillMaxSize()) {
+                val workStore = remember { com.openminis.app.workenv.WorkEnvironmentHolder.store(context) }
+                com.openminis.app.ui.workenv.WorkEnvironmentToggle(
+                    store = workStore,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
                 if (sessions.isEmpty()) {
                     if (isSearchActive && searchQuery.isNotBlank()) {
                         Box(
@@ -1295,6 +1300,11 @@ fun SessionListScreen(
             onDismiss = { showBrowserSettings = false },
         )
     }
+
+    com.openminis.app.ui.workenv.WorkEnvironmentSheetHost(
+        store = com.openminis.app.workenv.WorkEnvironmentHolder.store(context),
+        connection = com.openminis.app.workenv.WorkEnvironmentHolder.connection(context),
+    )
 }
 
 // ─── Dual FAB Row (matching iOS fabRow) ─────────────────────────────────────

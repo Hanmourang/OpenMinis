@@ -8265,7 +8265,27 @@ class ChatViewModel(
                 }
             }
 
-            var result = ExecutionCoordinator.execute(
+            val workStore = com.openminis.app.workenv.WorkEnvironmentHolder.store(context)
+            val result: ExecutionCoordinator.CommandResult
+            if (workStore.shouldRouteToDesktop()) {
+                val started = System.currentTimeMillis()
+                val (output, code) = com.openminis.app.workenv.WorkEnvironmentHolder
+                    .connection(context)
+                    .execute(originalCommand, timeoutSec)
+                val idx = toolBlocks.indexOfFirst { it.id == toolId }
+                if (idx >= 0) {
+                    toolBlocks[idx] = toolBlocks[idx].copy(content = output.lines().takeLast(50).joinToString("\n"))
+                    viewModelScope.launch(Dispatchers.Main) {
+                        updateAssistantMessage(assistantId, currentText, true, toolBlocks)
+                    }
+                }
+                result = ExecutionCoordinator.CommandResult(
+                    output = output,
+                    exitCode = code,
+                    durationMs = System.currentTimeMillis() - started,
+                )
+            } else {
+            var localResult = ExecutionCoordinator.execute(
                 sessionId = dispatchSessionId,
                 command = command,
                 timeout = timeoutSec * 1000L,
@@ -8300,16 +8320,18 @@ class ChatViewModel(
             // bash inline, so it still succeeds instead of failing.
             // Accept both the raw sentinel (119) and the wait(2)-encoded status
             // (119 << 8 = 30464) the coordinator may surface.
-            if ((result.exitCode == BASH_MISSING_SENTINEL ||
-                    result.exitCode == (BASH_MISSING_SENTINEL shl 8)) && bashScript != null) {
+            if ((localResult.exitCode == BASH_MISSING_SENTINEL ||
+                    localResult.exitCode == (BASH_MISSING_SENTINEL shl 8)) && bashScript != null) {
                 OnDemandBash.markDisappeared()
                 val executor = OnDemandBash.Executor { c, t ->
                     ExecutionCoordinator.execute(sessionId = dispatchSessionId, command = c, timeout = t).exitCode
                 }
                 val healed = OnDemandBash.ensureBash(context, executor)
                 command = if (healed is OnDemandBash.Outcome.Available) wrapForBash(bashScript!!) else bashScript!!
-                result = ExecutionCoordinator.execute(
+                localResult = ExecutionCoordinator.execute(
                     sessionId = dispatchSessionId, command = command, timeout = timeoutSec * 1000L)
+            }
+            result = localResult
             }
 
             // Also scrub markers from the aggregated one-shot output and

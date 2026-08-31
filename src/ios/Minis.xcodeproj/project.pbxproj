@@ -341,6 +341,12 @@
 		E5SHV0004 /* MountDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5SHV0104 /* MountDetailView.swift */; };
 		E5SOUL001 /* SoulStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5SOUL101 /* SoulStore.swift */; };
 		E5SOUL002 /* SoulSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5SOUL102 /* SoulSettingsView.swift */; };
+		E5WENV001 /* WorkEnvironmentModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5WENV101 /* WorkEnvironmentModels.swift */; };
+		E5WENV002 /* WorkEnvironmentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5WENV102 /* WorkEnvironmentStore.swift */; };
+		E5WENV003 /* DesktopConnectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5WENV103 /* DesktopConnectionManager.swift */; };
+		E5WENV004 /* WorkEnvironmentPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5WENV104 /* WorkEnvironmentPickerSheet.swift */; };
+		E5WENV005 /* WorkEnvironmentViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5WENV105 /* WorkEnvironmentViews.swift */; };
+		E5WENV202 /* work-environment.html in Resources */ = {isa = PBXBuildFile; fileRef = E5WENV201 /* work-environment.html */; };
 		E5SVP0021 /* ShadowVoiceProviderDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5SVP0031 /* ShadowVoiceProviderDetailView.swift */; };
 		E5T000001 /* SessionEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5T000011 /* SessionEntity.swift */; };
 		E5T000002 /* ListSessionsIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5T000012 /* ListSessionsIntent.swift */; };
@@ -970,6 +976,12 @@
 		E5SHV0104 /* MountDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MountDetailView.swift; sourceTree = "<group>"; };
 		E5SOUL101 /* SoulStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoulStore.swift; sourceTree = "<group>"; };
 		E5SOUL102 /* SoulSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoulSettingsView.swift; sourceTree = "<group>"; };
+		E5WENV101 /* WorkEnvironmentModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkEnvironmentModels.swift; sourceTree = "<group>"; };
+		E5WENV102 /* WorkEnvironmentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkEnvironmentStore.swift; sourceTree = "<group>"; };
+		E5WENV103 /* DesktopConnectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesktopConnectionManager.swift; sourceTree = "<group>"; };
+		E5WENV104 /* WorkEnvironmentPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkEnvironmentPickerSheet.swift; sourceTree = "<group>"; };
+		E5WENV105 /* WorkEnvironmentViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkEnvironmentViews.swift; sourceTree = "<group>"; };
+		E5WENV201 /* work-environment.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = "work-environment.html"; path = "../shared/work-environment/ui/work-environment.html"; sourceTree = SOURCE_ROOT; };
 		E5SVP0031 /* ShadowVoiceProviderDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShadowVoiceProviderDetailView.swift; sourceTree = "<group>"; };
 		E5T000011 /* SessionEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionEntity.swift; sourceTree = "<group>"; };
 		E5T000012 /* ListSessionsIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListSessionsIntent.swift; sourceTree = "<group>"; };
@@ -1310,6 +1322,7 @@
 				E5JB00015 /* hmm_model.utf8 */,
 				E53000030 /* Agent */,
 				E5D000030 /* Views */,
+				E5WENVG00 /* WorkEnvironment */,
 				E52000030 /* Providers */,
 				E5W000010 /* WebApp */,
 				E5B000030 /* iSH */,
@@ -1566,6 +1579,19 @@
 				E5CR00013 /* CrashSignalHandler.m */,
 			);
 			path = Diagnostics;
+			sourceTree = "<group>";
+		};
+		E5WENVG00 /* WorkEnvironment */ = {
+			isa = PBXGroup;
+			children = (
+				E5WENV101 /* WorkEnvironmentModels.swift */,
+				E5WENV102 /* WorkEnvironmentStore.swift */,
+				E5WENV103 /* DesktopConnectionManager.swift */,
+				E5WENV104 /* WorkEnvironmentPickerSheet.swift */,
+				E5WENV105 /* WorkEnvironmentViews.swift */,
+				E5WENV201 /* work-environment.html */,
+			);
+			path = WorkEnvironment;
 			sourceTree = "<group>";
 		};
 		E5D000030 /* Views */ = {
@@ -2371,6 +2397,7 @@
 				E51000003 /* Assets.xcassets in Resources */,
 				E5PV00001 /* PrivacyInfo.xcprivacy in Resources */,
 				E5LC00001 /* Localizable.xcstrings in Resources */,
+				E5WENV202 /* work-environment.html in Resources */,
 				E5IP00001 /* InfoPlist.strings in Resources */,
 				E5AS00001 /* AppShortcuts.strings in Resources */,
 				E5Q000002 /* cl100k_base.tiktoken in Resources */,
@@ -2803,6 +2830,11 @@
 				E5LOCK001 /* SessionLockStore.swift in Sources */,
 				E5SOUL001 /* SoulStore.swift in Sources */,
 				E5SOUL002 /* SoulSettingsView.swift in Sources */,
+				E5WENV001 /* WorkEnvironmentModels.swift in Sources */,
+				E5WENV002 /* WorkEnvironmentStore.swift in Sources */,
+				E5WENV003 /* DesktopConnectionManager.swift in Sources */,
+				E5WENV004 /* WorkEnvironmentPickerSheet.swift in Sources */,
+				E5WENV005 /* WorkEnvironmentViews.swift in Sources */,
 				E5LOCK002 /* FaceIDProtectionSettingsView.swift in Sources */,
 				E5LOCK003 /* AppLockOverlay.swift in Sources */,
 				E5N0000042F3B941A00049557 /* MemoryManagementView.swift in Sources */,

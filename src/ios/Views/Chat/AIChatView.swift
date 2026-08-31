@@ -487,6 +487,9 @@ struct AIChatView: View {
             // Messages — floating tool preview overlaid at bottom
             messagesArea
                 .safeAreaInset(edge: .top, spacing: 0) {
+                    WorkEnvironmentBadge(store: .shared)
+                        .frame(maxWidth: .infinity)
+                        .padding(.bottom, 2)
                     // Error banner
                     if let error = vm.errorMessage {
                         errorBanner(error)
@@ -680,6 +683,7 @@ struct AIChatView: View {
         .environment(\.chatSessionId, vm.sessionId)
         .modifier(NavBarStyleModifier(topSafeAreaInset: $topSafeAreaInset))
         .navigationBarTitleDisplayMode(.inline)
+        .workEnvironmentSheets()
         // [T-ios-navbar-toolbar-host] The ENTIRE toolbar now lives inside an
         // equatable-gated host child. Root cause of the mid-streaming "..."
         // menu refresh (4th attempt, this one from instrumentation): with
