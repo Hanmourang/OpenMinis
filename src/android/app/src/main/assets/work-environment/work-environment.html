@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>选择工作环境</title>
+  <style>
+    :root {
+      --accio-teal: #1FA97A;
+      --accio-teal-deep: #178A64;
+      --accio-link: #12A37A;
+      --accio-online: #1FA97A;
+      --accio-offline: #D4654A;
+      --accio-ink: #1A1A1A;
+      --accio-secondary: #8E8E93;
+      --accio-muted: #AEAEB2;
+      --accio-card: #F4F4F6;
+      --accio-line: #EFEFF2;
+      --accio-sheet: #FFFFFF;
+      --accio-handle: #D8D8DC;
+      --accio-mint: #D7F4E6;
+      --radius-sheet: 22px;
+      --radius-card: 16px;
+      --radius-pill: 999px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC",
+        "Hiragino Sans GB", "Noto Sans SC", "Helvetica Neue", sans-serif;
+      color: var(--accio-ink);
+      -webkit-font-smoothing: antialiased;
+    }
+    body.preview {
+      background: linear-gradient(180deg, #E8F7F2 0%, #F7F8F8 28%, #FFFFFF 70%);
+    }
+
+    .sheet {
+      background: var(--accio-sheet);
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    body.preview .sheet {
+      max-width: 430px;
+      margin: 24px auto;
+      min-height: calc(100% - 48px);
+      border-radius: var(--radius-sheet);
+      box-shadow: 0 18px 50px rgba(20, 30, 28, 0.16);
+      overflow: hidden;
+    }
+
+    .handle {
+      width: 36px;
+      height: 4px;
+      border-radius: 4px;
+      background: var(--accio-handle);
+      margin: 10px auto 2px;
+    }
+
+    .header {
+      position: relative;
+      padding: 10px 20px 14px;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+    .close {
+      position: absolute;
+      right: 16px;
+      top: 8px;
+      width: 32px;
+      height: 32px;
+      border: 0;
+      background: transparent;
+      color: #3A3A3C;
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .body {
+      padding: 0 20px 24px;
+      flex: 1;
+    }
+
+    .option {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 0;
+      cursor: pointer;
+    }
+    .option + .option,
+    .devices { border-top: 1px solid var(--accio-line); }
+
+    .icon-wrap {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+      color: #3A3A3C;
+    }
+    .icon-wrap svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+
+    .copy { flex: 1; min-width: 0; }
+    .copy .title {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+    .copy .desc {
+      margin-top: 4px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--accio-secondary);
+    }
+    .link {
+      color: var(--accio-link);
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .radio {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1.5px solid #C7C7CC;
+      flex-shrink: 0;
+      margin-top: 2px;
+      display: grid;
+      place-items: center;
+    }
+    .radio.on {
+      border-color: var(--accio-ink);
+    }
+    .radio.on::after {
+      content: "";
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accio-ink);
+    }
+
+    .devices { padding: 4px 0 8px 40px; }
+    .device {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+    }
+    .device-name {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .device-meta {
+      margin-top: 3px;
+      font-size: 12px;
+      color: var(--accio-secondary);
+    }
+    .online { color: var(--accio-online); font-weight: 500; }
+    .offline { color: var(--accio-offline); }
+
+    .connect-btn {
+      height: 32px;
+      padding: 0 14px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--accio-ink);
+      background: #fff;
+      color: var(--accio-ink);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .connect-btn:disabled { opacity: 0.45; }
+
+    .empty {
+      padding: 8px 0 16px;
+      font-size: 13px;
+      color: var(--accio-secondary);
+    }
+
+    .manual {
+      display: flex;
+      gap: 8px;
+      padding-bottom: 8px;
+    }
+    .manual input {
+      flex: 1;
+      height: 36px;
+      border: 1px solid #E5E5EA;
+      border-radius: 10px;
+      padding: 0 12px;
+      font-size: 13px;
+      outline: none;
+    }
+    .manual input:focus { border-color: var(--accio-teal); }
+
+    .steps { display: flex; flex-direction: column; gap: 12px; }
+    .step {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      background: var(--accio-card);
+      border-radius: 18px;
+      padding: 14px 14px 14px 12px;
+    }
+    .step .icon-wrap { color: #6E6E73; margin-top: 2px; }
+    .step p {
+      font-size: 14px;
+      line-height: 1.55;
+      color: #2C2C2E;
+    }
+    .step .email { font-weight: 700; }
+    .dl {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accio-link);
+      font-size: 13px;
+      word-break: break-all;
+    }
+    .copy-ico {
+      width: 16px;
+      height: 16px;
+      border: 0;
+      background: transparent;
+      color: var(--accio-link);
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .footer {
+      padding: 8px 20px calc(18px + env(safe-area-inset-bottom));
+    }
+    .primary {
+      width: 100%;
+      height: 50px;
+      border: 0;
+      border-radius: var(--radius-pill);
+      background: var(--accio-ink);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .hidden { display: none !important; }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 88px;
+      transform: translateX(-50%);
+      background: rgba(26,26,26,0.9);
+      color: #fff;
+      font-size: 13px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <div class="handle"></div>
+
+    <section id="screen-picker">
+      <header class="header">
+        <h1 id="picker-title">选择工作环境</h1>
+        <button class="close" type="button" data-action="close" aria-label="关闭">×</button>
+      </header>
+      <div class="body">
+        <div class="option" data-action="select-cloud">
+          <div class="icon-wrap" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M7.5 18h9.2a4.3 4.3 0 0 0 .6-8.55 6 6 0 0 0-11.4-1.3A4.2 4.2 0 0 0 7.5 18Z"/><path d="M12 14.2v-4.4M12 14.2l-1.7-1.7M12 14.2l1.7-1.7"/></svg>
+          </div>
+          <div class="copy">
+            <div class="title" id="cloud-title">使用云端工作</div>
+            <div class="desc" id="cloud-desc">在本机 Linux 沙箱中运行任务</div>
+          </div>
+          <div class="radio" id="cloud-radio"></div>
+        </div>
+
+        <div class="option" data-action="focus-desktop">
+          <div class="icon-wrap" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="12" rx="1.8"/><path d="M8 19.5h8M12 16.5v3"/></svg>
+          </div>
+          <div class="copy">
+            <div class="title" id="desktop-title">使用本地电脑工作</div>
+            <div class="desc">
+              <span id="desktop-desc">通过桌面端应用，让 Minis 查看并控制你的本地电脑。</span>
+              <span class="link" data-action="open-guide" id="guide-link">查看连接指引</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="devices">
+          <div class="manual">
+            <input id="manual-host" type="text" placeholder="host:port，例如 192.168.1.8:18765" autocomplete="off" />
+            <button class="connect-btn" type="button" data-action="add-manual" id="add-manual">添加</button>
+          </div>
+          <div id="device-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-guide" class="hidden">
+      <header class="header">
+        <h1 id="guide-title">连接到桌面端</h1>
+        <button class="close" type="button" data-action="close-guide" aria-label="关闭">×</button>
+      </header>
+      <div class="body">
+        <div class="steps">
+          <div class="step">
+            <div class="icon-wrap"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="12" rx="1.8"/><path d="M8 19.5h8"/></svg></div>
+            <p id="step1">Minis 会借助你的桌面电脑完成复杂任务。下载并运行桌面端：<br />
+              <span class="dl"><span id="download-url">https://openminis.app/desktop</span>
+                <button class="copy-ico" type="button" data-action="copy-link" aria-label="复制">⧉</button>
+              </span>
+            </p>
+          </div>
+          <div class="step">
+            <div class="icon-wrap"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19c1.4-3 4-4.6 6.5-4.6S17.1 16 18.5 19"/><path d="M16.2 7.2 17.6 8.6l3.2-3.2"/></svg></div>
+            <p id="step2">在同一局域网打开桌面端，保持可被发现。</p>
+          </div>
+          <div class="step">
+            <div class="icon-wrap"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="12" rx="1.8"/><circle cx="16.5" cy="16.5" r="3.2"/><path d="M16.5 15.2v2.6M15.2 16.5h2.6"/></svg></div>
+            <p id="step3">在桌面端设置中保持「允许此电脑被发现和控制」开启，并允许连接授权。</p>
+          </div>
+        </div>
+      </div>
+      <div class="footer">
+        <button class="primary" type="button" data-action="close-guide" id="got-it">我知道了</button>
+      </div>
+    </section>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const MOCK = typeof window.webkit === "undefined" && typeof window.MinisWorkEnv === "undefined";
+    const I18N = {
+      zh: {
+        pickerTitle: "选择工作环境",
+        cloudTitle: "使用云端工作",
+        cloudDesc: "在本机 Linux 沙箱中运行任务",
+        desktopTitle: "使用本地电脑工作",
+        desktopDesc: "通过桌面端应用，让 Minis 查看并控制你的本地电脑。",
+        guideLink: "查看连接指引",
+        guideTitle: "连接到桌面端",
+        step1: "Minis 会借助你的桌面电脑完成复杂任务。下载并运行桌面端：",
+        step2: "在同一局域网打开桌面端，保持可被发现。",
+        step3: "在桌面端设置中保持「允许此电脑被发现和控制」开启，并允许连接授权。",
+        gotIt: "我知道了",
+        connect: "连接",
+        online: "在线",
+        offline: "离线",
+        unpaired: "未配对",
+        paired: "已配对",
+        selected: "当前",
+        empty: "未发现桌面端。请启动 minis-desktop，或手动填写 host:port。",
+        add: "添加",
+        copied: "已复制下载说明",
+        connecting: "正在连接…",
+      },
+      en: {
+        pickerTitle: "Choose work environment",
+        cloudTitle: "Work in the cloud",
+        cloudDesc: "Run tasks in the on-device Linux sandbox",
+        desktopTitle: "Work on a local computer",
+        desktopDesc: "Let Minis view and control your desktop through the companion app. ",
+        guideLink: "View connection guide",
+        guideTitle: "Connect to desktop",
+        step1: "Minis uses your desktop computer for heavier work. Download and run the companion:",
+        step2: "Open the companion on the same network and keep it discoverable.",
+        step3: "In desktop settings, keep “Allow this computer to be discovered and controlled” on, and approve the pairing request.",
+        gotIt: "Got it",
+        connect: "Connect",
+        online: "online",
+        offline: "offline",
+        unpaired: "unpaired",
+        paired: "paired",
+        selected: "current",
+        empty: "No desktop companion found. Start minis-desktop, or add host:port manually.",
+        add: "Add",
+        copied: "Copied",
+        connecting: "Connecting…",
+      }
+    };
+
+    const locale = (document.documentElement.lang || navigator.language || "zh").toLowerCase().startsWith("zh") ? "zh" : "en";
+    const t = I18N[locale];
+
+    let state = {
+      kind: "cloud",
+      selectedDeviceId: null,
+      downloadURL: "https://openminis.app/desktop",
+      devices: MOCK ? [
+        { id: "demo-online", name: "hanmourang.local", os: "mac", online: true, paired: false },
+        { id: "demo-offline", name: "L44MXDWRNF", os: "mac", online: false, paired: true }
+      ] : []
+    };
+
+    function applyCopy() {
+      document.getElementById("picker-title").textContent = t.pickerTitle;
+      document.getElementById("cloud-title").textContent = t.cloudTitle;
+      document.getElementById("cloud-desc").textContent = t.cloudDesc;
+      document.getElementById("desktop-title").textContent = t.desktopTitle;
+      document.getElementById("desktop-desc").textContent = t.desktopDesc + " ";
+      document.getElementById("guide-link").textContent = t.guideLink;
+      document.getElementById("guide-title").textContent = t.guideTitle;
+      document.getElementById("got-it").textContent = t.gotIt;
+      document.getElementById("add-manual").textContent = t.add;
+      document.getElementById("download-url").textContent = state.downloadURL;
+      document.getElementById("step2").textContent = t.step2;
+      document.getElementById("step3").textContent = t.step3;
+    }
+
+    function toast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      setTimeout(() => el.classList.remove("show"), 1600);
+    }
+
+    function post(payload) {
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.minis) {
+        window.webkit.messageHandlers.minis.postMessage(payload);
+        return;
+      }
+      if (window.MinisWorkEnv && typeof window.MinisWorkEnv.post === "function") {
+        window.MinisWorkEnv.post(JSON.stringify(payload));
+        return;
+      }
+    }
+
+    function renderDevices() {
+      const root = document.getElementById("device-list");
+      const devices = state.devices || [];
+      if (!devices.length) {
+        root.innerHTML = `<div class="empty">${t.empty}</div>`;
+        return;
+      }
+      root.innerHTML = devices.map((d) => {
+        const selected = state.kind === "desktop" && state.selectedDeviceId === d.id;
+        const status = d.online
+          ? `<span class="online">${t.online}</span>`
+          : `<span class="offline">${t.offline}</span>`;
+        const pair = d.paired ? t.paired : t.unpaired;
+        const extra = selected ? ` · ${t.selected}` : "";
+        const trailing = d.online && !selected
+          ? `<button class="connect-btn" data-action="connect" data-id="${d.id}">${t.connect}</button>`
+          : `<div class="radio ${selected ? "on" : ""}" data-action="select-device" data-id="${d.id}"></div>`;
+        return `<div class="device">
+          <div class="copy">
+            <div class="device-name">${escapeHtml(d.name)}</div>
+            <div class="device-meta">${escapeHtml(d.os || "desktop")} · ${status} · ${pair}${extra}</div>
+          </div>
+          ${trailing}
+        </div>`;
+      }).join("");
+    }
+
+    function render() {
+      document.getElementById("cloud-radio").classList.toggle("on", state.kind === "cloud");
+      document.getElementById("download-url").textContent = state.downloadURL || "https://openminis.app/desktop";
+      renderDevices();
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
+    }
+
+    function showGuide(show) {
+      document.getElementById("screen-picker").classList.toggle("hidden", show);
+      document.getElementById("screen-guide").classList.toggle("hidden", !show);
+    }
+
+    document.addEventListener("click", (ev) => {
+      const btn = ev.target.closest("[data-action]");
+      if (!btn) return;
+      const action = btn.getAttribute("data-action");
+      if (action === "close") post({ type: "close" });
+      if (action === "open-guide") { showGuide(true); post({ type: "openGuide" }); }
+      if (action === "close-guide") { showGuide(false); post({ type: "closeGuide" }); }
+      if (action === "select-cloud") {
+        state.kind = "cloud";
+        state.selectedDeviceId = null;
+        render();
+        post({ type: "selectCloud" });
+        if (MOCK) post({ type: "close" });
+      }
+      if (action === "connect") {
+        const id = btn.getAttribute("data-id");
+        btn.textContent = t.connecting;
+        btn.disabled = true;
+        if (MOCK) {
+          const d = state.devices.find((x) => x.id === id);
+          if (d) { d.paired = true; state.kind = "desktop"; state.selectedDeviceId = id; }
+          render();
+        }
+        post({ type: "connect", id });
+      }
+      if (action === "select-device") {
+        const id = btn.getAttribute("data-id");
+        const d = (state.devices || []).find((x) => x.id === id);
+        if (d && d.online && d.paired) {
+          state.kind = "desktop";
+          state.selectedDeviceId = id;
+          render();
+          post({ type: "selectDevice", id });
+        }
+      }
+      if (action === "add-manual") {
+        const host = document.getElementById("manual-host").value.trim();
+        if (!host) return;
+        post({ type: "addManual", host });
+        if (MOCK) {
+          state.devices.unshift({
+            id: "manual-" + host,
+            name: host,
+            os: "desktop",
+            online: true,
+            paired: false
+          });
+          render();
+        }
+      }
+      if (action === "copy-link") {
+        const url = state.downloadURL || "https://openminis.app/desktop";
+        if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => {});
+        toast(t.copied);
+        post({ type: "copyLink", url });
+      }
+    });
+
+    window.__minisApplyState = function (next) {
+      state = Object.assign(state, next || {});
+      render();
+    };
+
+    applyCopy();
+    render();
+    if (MOCK) document.body.classList.add("preview");
+    post({ type: "ready" });
+  </script>
+</body>
+</html>

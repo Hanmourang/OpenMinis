@@ -2394,6 +2394,9 @@ fun ChatScreen(
                                     }
                                     .padding(horizontal = 4.dp, vertical = 2.dp),
                             )
+                            com.openminis.app.ui.workenv.WorkEnvironmentBadge(
+                                store = com.openminis.app.workenv.WorkEnvironmentHolder.store(context),
+                            )
                             // Accio 对话页副标题：单行薄荷绿胶囊（对齐 Accio
                             // 「云端」），点击打开现有 ChatModelPickerSheet。
                             // 空态主页把模型切换放在头像下方 + 输入卡下方，
@@ -6351,6 +6354,11 @@ fun ChatScreen(
         )
     }
     } // CompositionLocalProvider
+
+    com.openminis.app.ui.workenv.WorkEnvironmentSheetHost(
+        store = com.openminis.app.workenv.WorkEnvironmentHolder.store(context),
+        connection = com.openminis.app.workenv.WorkEnvironmentHolder.connection(context),
+    )
 }
 
 // [T-android-split-chat] UserMessageBubble / UserAttachmentList /

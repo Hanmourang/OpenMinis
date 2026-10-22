@@ -1233,6 +1233,7 @@ struct ContentView: View {
                 wireMenuActions()
             }
         }
+        .workEnvironmentSheets()
         .onReceive(
             NotificationCenter.default.publisher(for: .sessionDidCreate),
             perform: handleSessionCreatedForPendingFolder
@@ -2643,6 +2644,12 @@ struct ContentView: View {
     private var stackList: some View {
         ScrollViewReader { scrollProxy in
         List {
+            Section {
+                WorkEnvironmentToggle(store: .shared)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+            }
             // [T-ios-session-list-equatable-jank] id-list projection — see splitList.
             let groups = groupedSessionIDs(filteredSessions)
             ForEach(Array(groups.enumerated()), id: \.offset) { index, group in
@@ -2781,6 +2788,13 @@ struct ContentView: View {
     private var splitList: some View {
         ScrollViewReader { scrollProxy in
         List(selection: $selectedSessionId) {
+            Section {
+                WorkEnvironmentToggle(store: .shared)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    .modifier(SelectionDisabledIfAvailable())
+            }
             // [T-ios-session-list-equatable-jank] Diff a (label, ids) projection
             // so SwiftUI compares a [String] id list, not a [ChatSession] value
             // array. Rows resolve the model via displaySessionsById.
@@ -7281,6 +7295,19 @@ private struct SettingsSheet: View {
                 }
 
                 Section("Agent Runtime") {
+                    NavigationLink {
+                        WorkEnvironmentSettingsView()
+                    } label: {
+                        Label {
+                            Text(WorkEnvironmentL10n.settingsTitle)
+                        } icon: {
+                            Image(systemName: "cloud")
+                                .font(.system(size: 9))
+                                .foregroundStyle(.white)
+                                .frame(width: 21, height: 21)
+                                .background(Color(hex: WorkEnvironmentPalette.teal), in: Circle())
+                        }
+                    }
                     NavigationLink {
                         SkillsManagementView()
                     } label: {
