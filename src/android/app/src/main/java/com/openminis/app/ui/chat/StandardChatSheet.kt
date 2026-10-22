@@ -64,7 +64,7 @@ fun StandardChatSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = ChatColors.background,
+        containerColor = com.openminis.app.ui.theme.AccioTheme.card,
         dragHandle = { CompactDragHandle() },
     ) {
         Column(
@@ -103,7 +103,7 @@ private fun CompactDragHandle() {
                 .width(32.dp)
                 .height(4.dp)
                 .background(
-                    color = ChatColors.secondaryText.copy(alpha = 0.4f),
+                    color = com.openminis.app.ui.theme.AccioTheme.textSecondary.copy(alpha = 0.3f),
                     shape = RoundedCornerShape(2.dp),
                 ),
         )
@@ -135,9 +135,9 @@ fun StandardChatSheetHeader(
         Spacer(modifier = Modifier.weight(1f))
         Text(
             text = title,
-            fontSize = 16.sp,
+            fontSize = 17.sp,
             fontWeight = FontWeight.SemiBold,
-            color = ChatColors.primaryText,
+            color = com.openminis.app.ui.theme.AccioTheme.textPrimary,
         )
         Spacer(modifier = Modifier.weight(1f))
         IconButton(onClick = onDismiss) {

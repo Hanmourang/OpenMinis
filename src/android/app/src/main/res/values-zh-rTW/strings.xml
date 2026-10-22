@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <string name="chat_empty_subtitle">你的本機 AI 助手</string>
+
     <!-- T172 — chat sheets i18n -->
     <string name="move_to_sheet_title">移動到…</string>
     <string name="move_to_sheet_empty">沒有其他可用的會話。</string>

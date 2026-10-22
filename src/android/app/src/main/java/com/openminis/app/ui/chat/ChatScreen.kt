@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.FolderZip
+import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.VideoFile
 import androidx.compose.material.icons.automirrored.filled.Article
@@ -445,6 +446,9 @@ fun ChatScreen(
     // Callers needing the full history (compact / fork / regenerate / send)
     // continue to read viewModel.messages directly inside the VM.
     val messages by viewModel.uiMessages.collectAsState()
+    // 空态展示门：等 loadSession 落地后再亮出空态，避免进入有历史的
+    // 会话时先闪一帧空态（首帧 messages 恒为空，DB 加载是异步的）。
+    val historyLoaded by viewModel.historyLoaded.collectAsState()
     val hasOlderMessages by viewModel.hasOlderMessages.collectAsState()
     val isStreaming by viewModel.isStreaming.collectAsState()
     val canResume by viewModel.canResume.collectAsState()
@@ -459,6 +463,14 @@ fun ChatScreen(
     val showMemorySheet by viewModel.showMemorySheet.collectAsState()
     val memoryToolRecords by viewModel.memoryToolRecords.collectAsState()
     val selectedGroupName by viewModel.selectedGroupName.collectAsState()
+    // Accio 胶囊共享文案：与 TopAppBar 副标题同一兜底链
+    // （_selectedGroupName → 默认组名 → badge 字符串），供头部胶囊、
+    // 空态胶囊、输入栏下方环境/模型切换器三处复用。
+    val groupNameForPill = selectedGroupName.ifEmpty {
+        val defaultGroupId = providerRepository.defaultPrimaryGroupId
+        availableGroups.firstOrNull { it.id == defaultGroupId }?.name
+            ?: stringResource(R.string.model_picker_default_badge)
+    }
     val providerName by viewModel.providerName.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -2016,6 +2028,7 @@ fun ChatScreen(
             kotlinx.coroutines.delay(300)
             try {
                 inputFocusRequester.requestFocus()
+                keyboardController?.show()
             } catch (e: IllegalStateException) {
                 AppLogger.debug(
                     tagScroll,
@@ -2303,8 +2316,9 @@ fun ChatScreen(
         // map (which is last-writer-wins across sessions).
         LocalMarkdownSessionId provides sessionId,
     ) {
+    com.openminis.app.ui.components.AccioGradientBackground(modifier = Modifier.fillMaxSize()) {
     Scaffold(
-        containerColor = ChatColors.background,
+        containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
@@ -2364,10 +2378,10 @@ fun ChatScreen(
                             }
                             Text(
                                 text = displayTitle,
-                                fontSize = 16.sp,
-                                lineHeight = 19.sp,
+                                fontSize = 17.sp,
+                                lineHeight = 20.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = ChatColors.primaryText,
+                                color = com.openminis.app.ui.theme.AccioTheme.textPrimary,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 style = noFontPad,
@@ -2380,155 +2394,52 @@ fun ChatScreen(
                                     }
                                     .padding(horizontal = 4.dp, vertical = 2.dp),
                             )
-                            // Model picker subtitle: green dot + group +
-                            // provider/model. Tap opens the model picker —
-                            // separated from the title above so tapping the
-                            // title rows opens the rename sheet instead.
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .clickable { showModelPicker = true }
-                                    .padding(horizontal = 4.dp, vertical = 1.dp),
-                            ) {
-                                // Line 1: green dot + group name + dropdown arrow (iOS: "● Default ⌄")
+                            // Accio 对话页副标题：单行薄荷绿胶囊（对齐 Accio
+                            // 「云端」），点击打开现有 ChatModelPickerSheet。
+                            // 空态主页把模型切换放在头像下方 + 输入卡下方，
+                            // 头部不再重复两行 iOS 式 Default Models 文案。
+                            val showEmptyHero = historyLoaded && messages.isEmpty()
+                            if (!showEmptyHero && availableGroups.isNotEmpty()) {
+                                val thinkingLevelBadgeState by viewModel.thinkingLevel.collectAsState()
+                                val fastBadgeEligible by viewModel.showFastModeToggle.collectAsState()
+                                val fastBadgeOn by viewModel.fastModeEnabled.collectAsState()
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(3.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(6.dp)
-                                            .background(
-                                                if (modelName.isNotEmpty()) Color(0xFF34C759) else Color(0xFFFF9500),
-                                                CircleShape,
-                                            ),
+                                    com.openminis.app.ui.components.AccioPill(
+                                        text = if (modelName.isNotEmpty()) {
+                                            "$groupNameForPill · $modelName"
+                                        } else {
+                                            groupNameForPill
+                                        },
+                                        onClick = { showModelPicker = true },
                                     )
-                                    // T-android-topbar-group-name-fallback:
-                                    // _selectedGroupName is empty during the
-                                    // brief window before loadSession's group
-                                    // resolve runs, or whenever a binding
-                                    // resolve fails. Falling straight to the
-                                    // "Default" badge string masks the
-                                    // active group's real name (e.g. the
-                                    // onboarding-created "Default Models" or
-                                    // any user-renamed group). Insert a real
-                                    // fallback chain: collected VM value →
-                                    // active/default group name from the live
-                                    // config → terminal badge string. Mirrors
-                                    // the #476 TopBar title fallback pattern
-                                    // (commit b4c88775).
-                                    val groupNameDisplay = selectedGroupName.ifEmpty {
-                                        val defaultGroupId = providerRepository.defaultPrimaryGroupId
-                                        availableGroups.firstOrNull { it.id == defaultGroupId }?.name
-                                            ?: stringResource(R.string.model_picker_default_badge)
-                                    }
-                                    Text(
-                                        text = groupNameDisplay,
-                                        fontSize = 12.sp,
-                                        lineHeight = 14.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = ChatColors.secondaryText,
-                                        maxLines = 1,
-                                        style = noFontPad,
-                                    )
-                                    Icon(
-                                        Icons.Default.KeyboardArrowDown,
-                                        contentDescription = null,
-                                        tint = ChatColors.tertiaryText,
-                                        modifier = Modifier.size(14.dp),
-                                    )
-                                }
-                                // Line 2: "provider · model" (iOS: "MiniMax ·
-                                // MiniMax-M2.7") + the thinking-level badge laid
-                                // out as a Row of two SEPARATE tappable siblings
-                                // (mirrors iOS AIChatView row-2 HStack).
-                                //
-                                // [T-android-thinking-badge-navbar] Gesture
-                                // separation: the whole subtitle Column above owns
-                                // `clickable { showModelPicker = true }`, so a tap
-                                // on the model text still opens the model picker.
-                                // The badge declares its OWN `clickable` (see
-                                // ThinkingLevelBadge), and in Compose the innermost
-                                // clickable consumes the down/up events — so a tap
-                                // that lands on the badge opens the thinking sheet
-                                // and never bubbles up to the Column's model-picker
-                                // handler. Two hit targets, zero gesture conflict,
-                                // no pointerInput plumbing needed.
-                                //
-                                // Sizing: the model text takes `weight(1f, fill =
-                                // false)` so it truncates first (Ellipsis) when the
-                                // navbar is narrow; the badge has no weight, so it
-                                // keeps its intrinsic width and always renders in
-                                // full — the level label never gets clipped.
-                                if (providerName.isNotEmpty() || modelName.isNotEmpty()) {
-                                    val thinkingLevelBadgeState by viewModel.thinkingLevel.collectAsState()
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                    ) {
-                                        // [T-codex-fast-mode] ⚡ badge ahead of the
-                                        // resolved model name — small orange circle
-                                        // + white bolt, shown only while Fast Mode
-                                        // is enabled AND the active model is
-                                        // eligible (iOS 9e3c76ef row-3 placement,
-                                        // 09944220 9pt sizing).
-                                        val fastBadgeEligible by viewModel.showFastModeToggle.collectAsState()
-                                        val fastBadgeOn by viewModel.fastModeEnabled.collectAsState()
-                                        if (fastBadgeEligible && fastBadgeOn) {
-                                            Box(
-                                                contentAlignment = Alignment.Center,
-                                                modifier = Modifier
-                                                    .size(11.dp)
-                                                    .background(Color(0xFFFF9500), CircleShape),
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.Bolt,
-                                                    contentDescription = null,
-                                                    tint = Color.White,
-                                                    modifier = Modifier.size(9.dp),
-                                                )
-                                            }
-                                        }
-                                        Text(
-                                            text = if (providerName.isNotEmpty() && modelName.isNotEmpty()) {
-                                                "$providerName · $modelName"
-                                            } else {
-                                                modelName.ifEmpty { providerName }
-                                            },
-                                            fontSize = 11.sp,
-                                            lineHeight = 13.sp,
-                                            color = ChatColors.tertiaryText,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            style = noFontPad,
-                                            // Yield first when space is tight; the
-                                            // badge to the right stays intrinsic.
-                                            modifier = Modifier.weight(1f, fill = false),
-                                        )
-                                        // Show the badge whenever thinking is on,
-                                        // and ALSO when it's Off but the active
-                                        // model supports deep thinking (iOS
-                                        // parity, e6bd75efc): the icon + "Off"
-                                        // pill is then a discoverable tap target
-                                        // for enabling thinking via the level
-                                        // sheet. The Off pill is gated on
-                                        // currentModelSupportsReasoning so
-                                        // non-reasoning models don't grow a dead
-                                        // toggle; an enabled level still shows
-                                        // unconditionally (user may have opted in
-                                        // on an unknown-capability model).
-                                        if (viewModel.availableThinkingLevels.isNotEmpty() &&
-                                            (
-                                                thinkingLevelBadgeState.isEnabled ||
-                                                    viewModel.currentModelSupportsReasoning
-                                            )
+                                    if (fastBadgeEligible && fastBadgeOn) {
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier
+                                                .size(11.dp)
+                                                .background(Color(0xFFFF9500), CircleShape),
                                         ) {
-                                            ThinkingLevelBadge(
-                                                level = thinkingLevelBadgeState,
-                                                onClick = { showThinkingLevelSheet = true },
+                                            Icon(
+                                                Icons.Default.Bolt,
+                                                contentDescription = null,
+                                                tint = Color.White,
+                                                modifier = Modifier.size(9.dp),
                                             )
                                         }
+                                    }
+                                    if (viewModel.availableThinkingLevels.isNotEmpty() &&
+                                        (
+                                            thinkingLevelBadgeState.isEnabled ||
+                                                viewModel.currentModelSupportsReasoning
+                                        )
+                                    ) {
+                                        ThinkingLevelBadge(
+                                            level = thinkingLevelBadgeState,
+                                            onClick = { showThinkingLevelSheet = true },
+                                        )
                                     }
                                 }
                             }
@@ -2537,14 +2448,38 @@ fun ChatScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(34.dp)
+                                .background(com.openminis.app.ui.theme.AccioTheme.brandSoft, CircleShape),
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = com.openminis.app.ui.theme.AccioTheme.brand,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
                     }
                 },
                 actions = {
                     // iOS: "..." circle button → dropdown menu
                     Box {
                         IconButton(onClick = { showChatMenu = true }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "More")
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .background(com.openminis.app.ui.theme.AccioTheme.brandSoft, CircleShape),
+                            ) {
+                                Icon(
+                                    Icons.Default.MoreVert,
+                                    contentDescription = "More",
+                                    tint = com.openminis.app.ui.theme.AccioTheme.brand,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            }
                         }
                         MinisMenu(
                             expanded = showChatMenu,
@@ -2794,8 +2729,8 @@ fun ChatScreen(
                 },
                 windowInsets = WindowInsets.statusBars,
                 colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
-                    containerColor = ChatColors.background.copy(alpha = 0.92f),
-                    scrolledContainerColor = ChatColors.background.copy(alpha = 0.92f),
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = Color.Transparent,
                 ),
                 // [T-android-topbar-shrink] 76dp → 68dp. The earlier
                 // T-topbar-model-row-clip fix bumped 60dp → 76dp to give the
@@ -2810,7 +2745,7 @@ fun ChatScreen(
                 // user-configured font scale on xhdpi/xxhdpi without
                 // re-clipping (T-topbar-model-row-clip regression check).
                 // Font sizes + lineHeights stay untouched per spec.
-                expandedHeight = 68.dp,
+                expandedHeight = 56.dp,
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -3407,6 +3342,51 @@ fun ChatScreen(
                 // initial list measure, or per-row composition.
                 val perfFirstLayoutFired = remember(sessionId) { java.util.concurrent.atomic.AtomicBoolean(false) }
                 Box {
+                // Accio 风格空态：无消息时居中展示 Soul 头像 + 名称 + 副标题
+                // + 模型切换胶囊（点击打开现有 ChatModelPickerSheet）。
+                // 空会话时 LazyColumn 本身无条目，空态直接作为底层呈现。
+                if (historyLoaded && messages.isEmpty()) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        val emptySoul by com.openminis.app.agent.SoulStore
+                            .cachedMetadata.collectAsState()
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(88.dp)
+                                .background(com.openminis.app.ui.theme.AccioTheme.brandSoft, CircleShape),
+                        ) {
+                            // SoulMetadata 无头像字段，UI 身份统一为锁定 ✨
+                            // （SoulStore.DISPLAY_EMOJI，与设置预览/聊天气泡一致）。
+                            Text(text = emptySoul.displayEmoji, fontSize = 40.sp)
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = emptySoul.name.ifBlank { stringResource(R.string.app_name) },
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = com.openminis.app.ui.theme.AccioTheme.textPrimary,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        // SoulMetadata 无描述/tagline 字段，副标题用固定兜底文案。
+                        Text(
+                            text = stringResource(R.string.chat_empty_subtitle),
+                            fontSize = 13.sp,
+                            color = com.openminis.app.ui.theme.AccioTheme.textSecondary,
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        if (availableGroups.isNotEmpty()) {
+                            com.openminis.app.ui.components.AccioPill(
+                                text = groupNameForPill,
+                                onClick = { showModelPicker = true },
+                                leadingIcon = Icons.Default.SmartToy,
+                            )
+                        }
+                    }
+                }
                 AlwaysStretchOverscrollBox { sharedEffect ->
                 LazyColumn(
                     state = listState,
@@ -4226,7 +4206,7 @@ fun ChatScreen(
                     .fillMaxWidth()
                     .navigationBarsPadding()
                     .padding(horizontal = 12.dp)
-                    .padding(top = 2.dp, bottom = 8.dp),
+                    .padding(top = 2.dp, bottom = 12.dp),
             ) {
                 // T13 banner moved INSIDE the LazyColumn so it renders at the
                 // visual end of the message list (mirrors iOS — see the
@@ -4608,7 +4588,8 @@ fun ChatScreen(
                 // Input box: iOS-style floating card — no visible border, separated
                 // from the backdrop by a symmetric soft shadow painted by hand
                 // (Android's Modifier.shadow only casts downward).
-                val inputBgArgb = ChatColors.inputBg.toArgb()
+                val inputBgArgb = com.openminis.app.ui.theme.AccioTheme.card.toArgb()
+                val accioDark = com.openminis.app.ui.theme.AccioTheme.isDark
                 val shadowPaint = remember(inputBgArgb) {
                     android.graphics.Paint().apply {
                         color = inputBgArgb
@@ -4715,29 +4696,43 @@ fun ChatScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .drawBehind {
-                            val radiusPx = 20.dp.toPx()
+                            val radiusPx = 24.dp.toPx()
                             val canvas = drawContext.canvas.nativeCanvas
-                            // Pass 1: symmetric ambient halo — small blur, low alpha.
-                            shadowPaint.setShadowLayer(
-                                6.dp.toPx(), 0f, 0f,
-                                android.graphics.Color.argb(22, 0, 0, 0),
-                            )
-                            canvas.drawRoundRect(
-                                0f, 0f, size.width, size.height,
-                                radiusPx, radiusPx,
-                                shadowPaint,
-                            )
-                            // Pass 2: soft downward shadow (spot light).
-                            shadowPaint.setShadowLayer(
-                                10.dp.toPx(), 0f, 3.dp.toPx(),
-                                android.graphics.Color.argb(24, 0, 0, 0),
-                            )
-                            canvas.drawRoundRect(
-                                0f, 0f, size.width, size.height,
-                                radiusPx, radiusPx,
-                                shadowPaint,
-                            )
+                            if (!accioDark) {
+                                // Pass 1: symmetric ambient halo — small blur, low alpha.
+                                shadowPaint.setShadowLayer(
+                                    6.dp.toPx(), 0f, 0f,
+                                    android.graphics.Color.argb(22, 0, 0, 0),
+                                )
+                                canvas.drawRoundRect(
+                                    0f, 0f, size.width, size.height,
+                                    radiusPx, radiusPx,
+                                    shadowPaint,
+                                )
+                                // Pass 2: soft downward shadow (spot light).
+                                shadowPaint.setShadowLayer(
+                                    10.dp.toPx(), 0f, 3.dp.toPx(),
+                                    android.graphics.Color.argb(24, 0, 0, 0),
+                                )
+                                canvas.drawRoundRect(
+                                    0f, 0f, size.width, size.height,
+                                    radiusPx, radiusPx,
+                                    shadowPaint,
+                                )
+                            } else {
+                                shadowPaint.clearShadowLayer()
+                                canvas.drawRoundRect(
+                                    0f, 0f, size.width, size.height,
+                                    radiusPx, radiusPx,
+                                    shadowPaint,
+                                )
+                            }
                         }
+                        .border(
+                            1.dp,
+                            com.openminis.app.ui.theme.AccioTheme.cardBorder,
+                            RoundedCornerShape(24.dp),
+                        )
                         .padding(top = if (attachments.isNotEmpty()) 8.dp else 4.dp),
                 ) {
                     // T185: Move-to capsule lives INSIDE the composer card,
@@ -5185,7 +5180,10 @@ fun ChatScreen(
                                 .fillMaxWidth()
                                 .heightIn(min = 25.dp)
                                 .focusRequester(inputFocusRequester)
-                                .onFocusChanged { inputFocused = it.isFocused }
+                                .onFocusChanged {
+                                    inputFocused = it.isFocused
+                                    if (it.isFocused) keyboardController?.show()
+                                }
                                 .onKeyEvent { event ->
                                     // T-at-filepicker-keyboard: while the @-mention
                                     // menu is open, hardware Up/Down navigates the
@@ -5943,6 +5941,27 @@ fun ChatScreen(
                 )
             } // end swipe-to-send Box wrapping the composer Column
 
+            // Accio 风格环境/模型切换器：仅空态主页显示在输入卡正下方
+            // （对齐 Accio「云端」条）；对话态改由头部胶囊承担，避免重复。
+            if (availableGroups.isNotEmpty() && historyLoaded && messages.isEmpty()) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp, bottom = 12.dp),
+                ) {
+                    com.openminis.app.ui.components.AccioPill(
+                        text = if (modelName.isNotEmpty()) {
+                            "$groupNameForPill · $modelName"
+                        } else {
+                            groupNameForPill
+                        },
+                        onClick = { showModelPicker = true },
+                        leadingIcon = Icons.Default.SmartToy,
+                    )
+                }
+            }
+
             if (showMoveSheet) {
                 MoveToSessionSheet(
                     currentSessionId = sessionId,
@@ -6046,7 +6065,7 @@ fun ChatScreen(
                 )
             }
         }
-        // Top gradient fade: messages fade into the Scaffold background.
+        // Top gradient fade: messages fade into the Accio page gradient.
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -6055,13 +6074,14 @@ fun ChatScreen(
                 .background(
                     androidx.compose.ui.graphics.Brush.verticalGradient(
                         colors = listOf(
-                            ChatColors.background,
-                            ChatColors.background.copy(alpha = 0f),
+                            com.openminis.app.ui.theme.AccioTheme.gradientTop,
+                            com.openminis.app.ui.theme.AccioTheme.gradientTop.copy(alpha = 0f),
                         ),
                     )
                 )
         )
         }
+    }
     }
 
     // Browser bottom sheet

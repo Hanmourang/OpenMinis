@@ -694,6 +694,11 @@ class ChatViewModel(
      *  default model name for one frame before the persisted binding settles. */
     private val sessionLoaded = MutableStateFlow(false)
 
+    /** Read-only view of the [sessionLoaded] gate for UI: lets the empty
+     *  state wait until [loadSession] settles so opening a session WITH
+     *  history doesn't flash the empty placeholder for one frame. */
+    val historyLoaded: StateFlow<Boolean> = sessionLoaded.asStateFlow()
+
     private val _sessionTitle = MutableStateFlow("New Chat")
     val sessionTitle: StateFlow<String> = _sessionTitle.asStateFlow()
 

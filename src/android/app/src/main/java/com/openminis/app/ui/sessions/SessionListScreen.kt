@@ -607,7 +607,9 @@ fun SessionListScreen(
             .map { list -> list.count { it.enabled } }
     }.collectAsState(initial = 0)
 
+    com.openminis.app.ui.components.AccioGradientBackground(modifier = Modifier.fillMaxSize()) {
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
             TopAppBar(
                 title = {
@@ -635,7 +637,19 @@ fun SessionListScreen(
                         }
                     } else {
                         IconButton(onClick = onSettingsClick) {
-                            Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.sessionlist_settings))
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .background(com.openminis.app.ui.theme.AccioTheme.brandSoft, CircleShape),
+                            ) {
+                                Icon(
+                                    Icons.Default.Settings,
+                                    contentDescription = stringResource(R.string.sessionlist_settings),
+                                    tint = com.openminis.app.ui.theme.AccioTheme.brand,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            }
                         }
                     }
                 },
@@ -656,24 +670,47 @@ fun SessionListScreen(
                         // scheduled tasks so the user can see at a glance how many
                         // are configured without opening the list.
                         IconButton(onClick = onScheduledTasksClick) {
-                            if (scheduledTaskCount > 0) {
-                                BadgedBox(badge = { Badge { Text("$scheduledTaskCount") } }) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .background(com.openminis.app.ui.theme.AccioTheme.brandSoft, CircleShape),
+                            ) {
+                                if (scheduledTaskCount > 0) {
+                                    BadgedBox(badge = { Badge { Text("$scheduledTaskCount") } }) {
+                                        Icon(
+                                            Icons.Outlined.Schedule,
+                                            contentDescription = stringResource(R.string.sessionlist_scheduled_tasks),
+                                            tint = com.openminis.app.ui.theme.AccioTheme.brand,
+                                            modifier = Modifier.size(18.dp),
+                                        )
+                                    }
+                                } else {
                                     Icon(
                                         Icons.Outlined.Schedule,
                                         contentDescription = stringResource(R.string.sessionlist_scheduled_tasks),
+                                        tint = com.openminis.app.ui.theme.AccioTheme.brand,
+                                        modifier = Modifier.size(18.dp),
                                     )
                                 }
-                            } else {
-                                Icon(
-                                    Icons.Outlined.Schedule,
-                                    contentDescription = stringResource(R.string.sessionlist_scheduled_tasks),
-                                )
                             }
                         }
                         // Shell menu (matching iOS trailing shell button: Terminal, Rootfs, Browser)
                         Box {
                             IconButton(onClick = { showOverflowMenu = true }) {
-                                Icon(Icons.Outlined.Terminal, contentDescription = stringResource(R.string.sessionlist_shell))
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .background(com.openminis.app.ui.theme.AccioTheme.brandSoft, CircleShape),
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.Terminal,
+                                        contentDescription = stringResource(R.string.sessionlist_shell),
+                                        tint = com.openminis.app.ui.theme.AccioTheme.brand,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                }
                             }
                             MinisMenu(
                                 expanded = showOverflowMenu,
@@ -739,6 +776,9 @@ fun SessionListScreen(
                         }
                     }
                 },
+                colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                ),
             )
         },
         // No default FAB — we draw dual FABs manually at bottom
@@ -834,7 +874,7 @@ fun SessionListScreen(
                                     val isLast = session.id == rows.last().id
                                     Modifier
                                         .padding(
-                                            start = 6.dp, end = 6.dp,
+                                            start = 12.dp, end = 12.dp,
                                             bottom = if (isLast) 4.dp else 0.dp,
                                         )
                                         .folderSurface(
@@ -1116,6 +1156,7 @@ fun SessionListScreen(
                 )
             }
         }
+    }
     }
 
     // Single delete confirmation
@@ -1632,9 +1673,9 @@ private fun SectionHeader(title: String) {
         }
         Text(
             text = title,
-            fontSize = 14.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = com.openminis.app.ui.theme.AccioTheme.textSecondary,
         )
     }
 }
@@ -2114,12 +2155,12 @@ private fun FolderCard(
     val headerHaptics = androidx.compose.ui.platform.LocalHapticFeedback.current
     Box(
         modifier = Modifier
-            // 6dp outer inset floats the rounded card inside the list width
-            // (iOS: the inset frame is what separates it from the full-bleed
-            // session rows at a glance). 6 outer + 10 inner = 16 — the folder
-            // icon sits exactly on the session rows' alignment grid.
+            // 12dp outer inset floats the rounded card inside the list width,
+            // matching the Accio session cards' margins so every card shares
+            // one width. 12 outer + 10 inner = 22 — the folder icon sits
+            // exactly on the session rows' alignment grid.
             .padding(
-                start = 6.dp, end = 6.dp, top = 4.dp,
+                start = 12.dp, end = 12.dp, top = 4.dp,
                 bottom = if (isExpandedWithRows) 0.dp else 4.dp,
             )
             .folderSurface(
@@ -2361,26 +2402,33 @@ private fun SessionRow(
     // hand: emit Press/Release/Cancel into an InteractionSource from
     // onPress, and mount it with Modifier.indication.
     //
-    // Highlight SHAPE mirrors the folder card (user request): ungrouped rows
-    // clip the indication to the same 6dp-inset, 16dp-radius rounded rect the
-    // group card uses — 6dp outside the clip + 10dp inside keeps the total
-    // 16dp content lead, so nothing moves. Folder members skip this: their
-    // wrapper Box already clips to the welded container's segment shape
-    // (square middles / bottom-rounded last), and a rounded ripple mid-weld
-    // would break the one-container illusion.
+    // Highlight SHAPE mirrors the row's card: ungrouped rows are Accio
+    // cards (12dp outer margin, 20dp radius, own fill + border) and clip the
+    // indication to that shape. Folder members skip this: their wrapper Box
+    // already clips to the welded container's segment shape (square middles /
+    // bottom-rounded last), and a rounded ripple mid-weld would break the
+    // one-container illusion.
     val pressInteractions = remember { MutableInteractionSource() }
     val inFolder = rowBackground != null
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(rowBackground ?: MaterialTheme.colorScheme.surface)
             .then(
                 if (!inFolder) {
+                    // Accio 卡片化：未分组行成为白底 20dp 圆角卡片，外边距让
+                    // 页面渐变在卡片间透出；背景置于 clip 之后，卡片自身即圆角。
+                    // 分组内成员维持透明，由外层 folderSurface 焊接容器呈现。
                     Modifier
-                        .padding(horizontal = 6.dp)
-                        .clip(RoundedCornerShape(16.dp))
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(com.openminis.app.ui.theme.AccioTheme.card)
+                        .border(
+                            1.dp,
+                            com.openminis.app.ui.theme.AccioTheme.cardBorder,
+                            RoundedCornerShape(20.dp),
+                        )
                 } else {
-                    Modifier
+                    Modifier.background(rowBackground ?: Color.Transparent)
                 }
             )
             .then(
@@ -2423,11 +2471,11 @@ private fun SessionRow(
                 }
             )
             .padding(
-                // 10dp in BOTH branches. Ungrouped: 6dp highlight-clip inset
-                // + 10 = 16dp lead. In-folder: the wrapper Box already adds
-                // the container's 6dp inset, so 16dp here pushed member icons
-                // to 22dp — 6dp right of the folder card's own icon (6 outer
-                // + 10 inner = 16). 10dp restores one shared 16dp icon grid
+                // 10dp in BOTH branches. Ungrouped: 12dp card margin + 10 =
+                // 22dp icon lead. In-folder: the wrapper Box already adds the
+                // container's 12dp inset, so 16dp here pushed member icons to
+                // 28dp — 6dp right of the folder card's own icon (12 outer +
+                // 10 inner = 22). 10dp restores one shared 22dp icon grid
                 // for the card, its members, and ungrouped rows alike.
                 horizontal = 10.dp,
                 vertical = 12.dp,
